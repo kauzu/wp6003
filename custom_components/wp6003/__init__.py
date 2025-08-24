@@ -41,6 +41,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up a config entry: register BLE callback + forward platforms."""
     from . import bluetooth  # local import to avoid circulars
+    from .gatt_client import ensure_gatt_task
     _LOGGER.critical("[wp6003] async_setup_entry start %s", entry.entry_id)
     t0 = time.time()
     try:
@@ -50,6 +51,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         unregister = None
 
     hass.data[DOMAIN][entry.entry_id] = {"unregister_callback": unregister}
+
+    # Always start GATT task (device seems to provide measurements via notify characteristic)
+    mac = entry.data.get("mac_address")
+    if mac:
+        ensure_gatt_task(hass, entry.entry_id, mac.lower())
 
     try:
         # Newer HA (2023.8+) helper for multiple platforms
@@ -74,6 +80,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     _LOGGER.critical("[wp6003] async_unload_entry start %s", entry.entry_id)
+    from .gatt_client import stop_gatt_task
     data = hass.data.get(DOMAIN, {}).get(entry.entry_id)
     if data and (unregister := data.get("unregister_callback")):
         try:
@@ -81,6 +88,12 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             _LOGGER.critical("[wp6003] unregistered bluetooth callback %s", entry.entry_id)
         except Exception:  # pragma: no cover - defensive
             pass
+
+    # Stop GATT background task
+    try:
+        await stop_gatt_task(hass, entry.entry_id)
+    except Exception:  # pragma: no cover
+        _LOGGER.exception("Error stopping GATT task for %s", entry.entry_id)
 
     try:
         unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

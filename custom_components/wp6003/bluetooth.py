@@ -41,17 +41,36 @@ async def async_setup_entry(hass, config_entry, async_add_entities=None):
             if len(store) > RECENT_ADVERTS_MAX:
                 store.pop(0)
 
+            # Extra diagnostic logging (rate-limited) so we can see what the device actually sends
+            if time.time() - last_no_payload_log > 30:
+                last_no_payload_log = time.time()  # reuse timer for generic periodic log
+                manuf_summary = {
+                    hex(k): len(v) for k, v in service_info.manufacturer_data.items()
+                }
+                _LOGGER.critical(
+                    "[wp6003] seen target MAC %s rssi=%s mfr=%s svc=%s connectable=%s",  # noqa: E501
+                    target_mac,
+                    service_info.rssi,
+                    manuf_summary,
+                    service_info.service_uuids,
+                    getattr(service_info, "connectable", None),
+                )
+
             payload = service_info.manufacturer_data.get(0xEB01)
             if not payload:
-                if time.time() - last_no_payload_log > 30:
-                    last_no_payload_log = time.time()
-                    _LOGGER.critical("[wp6003] target MAC %s seen without 0xEB01; ids=%s", target_mac, advert["manufacturer_ids"])
+                # We'll already have logged a summary every 30s; keep this terse to avoid log spam
                 return
             data = parse_wp6003_ble_packet(payload)
             if not data:
                 _LOGGER.critical("[wp6003] decode failed len=%d ids=%s", len(payload), advert["manufacturer_ids"])
                 return
-            _LOGGER.critical("[wp6003] decoded data %s rssi=%s", data, service_info.rssi)
+            # Show first few raw bytes for validation
+            _LOGGER.critical(
+                "[wp6003] decoded data %s rssi=%s raw=%s", 
+                data, 
+                service_info.rssi,
+                payload.hex()[:60],
+            )
             hass.bus.fire(f"{DOMAIN}_update", data)
         except Exception:  # pragma: no cover
             _LOGGER.exception("Error in WP6003 BLE callback")
