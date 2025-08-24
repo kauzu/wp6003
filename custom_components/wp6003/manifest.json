@@ -8,7 +8,7 @@
   "codeowners": ["@kauzu"],
   "config_flow": true,
   "iot_class": "local_push",
-  "bluetooth": [
-    { "manufacturer_id": 60161 }
-  ]
+  "bluetooth": {
+    "manufacturer_id": 60161
+  }
 }
