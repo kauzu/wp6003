@@ -8,4 +8,10 @@
   "codeowners": ["@kauzu"],
   "config_flow": true,
   "iot_class": "local_push"
+  ,"loggers": [
+    "custom_components.wp6003",
+    "custom_components.wp6003.bluetooth",
+    "custom_components.wp6003.sensor",
+    "custom_components.wp6003.ble_decoder"
+  ]
 }

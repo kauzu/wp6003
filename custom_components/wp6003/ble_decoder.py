@@ -1,6 +1,6 @@
 import logging
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger("custom_components.wp6003.ble_decoder")
 
 def parse_wp6003_ble_packet(payload: bytes) -> dict | None:
     if len(payload) < 18:

@@ -9,7 +9,7 @@ from .ble_decoder import parse_wp6003_ble_packet
 import logging
 import time
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger("custom_components.wp6003.bluetooth")
 _LOGGER.warning("[wp6003] bluetooth module imported")
 
 

@@ -5,7 +5,7 @@ from .const import DOMAIN
 import logging
 import time
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger("custom_components.wp6003.sensor")
 _LOGGER.debug("[wp6003] sensor module imported")
 
 SENSOR_DESCRIPTORS = [
