@@ -31,7 +31,7 @@ class WP6003DynamicSensor(SensorEntity):
         self._unit = unit
         self._state = None
         self._remove_listener = None
-        _LOGGER.warning("[wp6003] sensor %s instantiated", self._attr_unique_id)
+        _LOGGER.critical("[wp6003] sensor %s instantiated", self._attr_unique_id)
         self._attr_device_info = {
             "identifiers": {(DOMAIN, "wp6003_device")},
             "name": "WP6003 Sensor",
@@ -48,15 +48,15 @@ class WP6003DynamicSensor(SensorEntity):
         return self._unit
 
     async def async_added_to_hass(self):
-        _LOGGER.warning("[wp6003] sensor %s added to hass", self._attr_unique_id)
+    _LOGGER.critical("[wp6003] sensor %s added", self._attr_unique_id)
 
         async def handle_update(event):
             start = time.time()
             if self._key in event.data:
                 old = self._state
                 self._state = event.data[self._key]
-                _LOGGER.warning(
-                    "[wp6003] sensor %s update key=%s old=%s new=%s dt=%.4f",
+                _LOGGER.critical(
+                    "[wp6003] sensor %s update %s old=%s new=%s dt=%.4f",
                     self._attr_unique_id,
                     self._key,
                     old,
@@ -68,7 +68,7 @@ class WP6003DynamicSensor(SensorEntity):
         self._remove_listener = self.hass.bus.async_listen(f"{DOMAIN}_update", handle_update)
 
     async def async_will_remove_from_hass(self):
-        _LOGGER.debug("[wp6003] sensor %s will be removed", self._attr_unique_id)
+    _LOGGER.critical("[wp6003] sensor %s removed", self._attr_unique_id)
         if self._remove_listener:
             self._remove_listener()
             self._remove_listener = None
