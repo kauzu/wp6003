@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from homeassistant.helpers.entity import Entity
+from homeassistant.components.sensor import SensorEntity
 from .const import DOMAIN
 import logging
 import time
@@ -23,7 +23,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     _LOGGER.debug("[wp6003] sensor.async_setup_entry added %d entities", len(entities))
 
 
-class WP6003DynamicSensor(Entity):
+class WP6003DynamicSensor(SensorEntity):
     def __init__(self, key: str, name: str, unit: str):
         self._attr_name = f"WP6003 {name}"
         self._attr_unique_id = f"wp6003_{key}"
@@ -31,7 +31,13 @@ class WP6003DynamicSensor(Entity):
         self._unit = unit
         self._state = None
         self._remove_listener = None
-        _LOGGER.debug("[wp6003] sensor %s instantiated", self._attr_unique_id)
+        _LOGGER.warning("[wp6003] sensor %s instantiated", self._attr_unique_id)
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, "wp6003_device")},
+            "name": "WP6003 Sensor",
+            "manufacturer": "WP6003",
+            "model": "BLE Env",
+        }
 
     @property
     def native_value(self):  # new HA style
@@ -42,14 +48,14 @@ class WP6003DynamicSensor(Entity):
         return self._unit
 
     async def async_added_to_hass(self):
-        _LOGGER.debug("[wp6003] sensor %s added to hass", self._attr_unique_id)
+        _LOGGER.warning("[wp6003] sensor %s added to hass", self._attr_unique_id)
 
         async def handle_update(event):
             start = time.time()
             if self._key in event.data:
                 old = self._state
                 self._state = event.data[self._key]
-                _LOGGER.debug(
+                _LOGGER.warning(
                     "[wp6003] sensor %s update key=%s old=%s new=%s dt=%.4f",
                     self._attr_unique_id,
                     self._key,
