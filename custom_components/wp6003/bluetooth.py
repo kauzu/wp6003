@@ -7,15 +7,19 @@ from homeassistant.components.bluetooth import (
 from .const import CONF_MAC, DOMAIN
 from .ble_decoder import parse_wp6003_ble_packet
 import logging
+import time
 
 _LOGGER = logging.getLogger(__name__)
+_LOGGER.debug("[wp6003] bluetooth module imported")
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities=None):
     """Register a bluetooth callback for the target MAC and return unregister callable."""
-    target_mac = config_entry.data[CONF_MAC].lower()
+    target_mac = config_entry.data.get(CONF_MAC, "").lower()
+    _LOGGER.debug("[wp6003] bluetooth.async_setup_entry target_mac=%s entry=%s", target_mac, config_entry.entry_id)
 
     def ble_callback(service_info: BluetoothServiceInfoBleak, change: BluetoothChange):
+        start = time.time()
         try:
             if service_info.address.lower() != target_mac:
                 return
@@ -31,8 +35,10 @@ async def async_setup_entry(hass, config_entry, async_add_entities=None):
             hass.bus.fire(f"{DOMAIN}_update", data)
         except Exception:  # pragma: no cover
             _LOGGER.exception("Error in WP6003 BLE callback")
+        finally:
+            _LOGGER.debug("[wp6003] ble_callback dt=%.4f", time.time() - start)
 
     matcher: BluetoothCallbackMatcher = {"manufacturer_id": 0xEB01}
-    _LOGGER.debug("Registering WP6003 BLE callback for %s", target_mac)
+    _LOGGER.debug("Registering WP6003 BLE callback for %s matcher=%s", target_mac, matcher)
     unregister = async_register_callback(hass, ble_callback, matcher, bluetooth_adapter=None)
     return unregister

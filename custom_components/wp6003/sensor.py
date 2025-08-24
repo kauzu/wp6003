@@ -2,6 +2,11 @@ from __future__ import annotations
 
 from homeassistant.helpers.entity import Entity
 from .const import DOMAIN
+import logging
+import time
+
+_LOGGER = logging.getLogger(__name__)
+_LOGGER.debug("[wp6003] sensor module imported")
 
 SENSOR_DESCRIPTORS = [
     ("temperature", "Temperature", "°C"),
@@ -12,8 +17,10 @@ SENSOR_DESCRIPTORS = [
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
+    _LOGGER.debug("[wp6003] sensor.async_setup_entry for %s", entry.entry_id)
     entities = [WP6003DynamicSensor(key, name, unit) for key, name, unit in SENSOR_DESCRIPTORS]
     async_add_entities(entities)
+    _LOGGER.debug("[wp6003] sensor.async_setup_entry added %d entities", len(entities))
 
 
 class WP6003DynamicSensor(Entity):
@@ -24,6 +31,7 @@ class WP6003DynamicSensor(Entity):
         self._unit = unit
         self._state = None
         self._remove_listener = None
+        _LOGGER.debug("[wp6003] sensor %s instantiated", self._attr_unique_id)
 
     @property
     def native_value(self):  # new HA style
@@ -34,14 +42,27 @@ class WP6003DynamicSensor(Entity):
         return self._unit
 
     async def async_added_to_hass(self):
+        _LOGGER.debug("[wp6003] sensor %s added to hass", self._attr_unique_id)
+
         async def handle_update(event):
+            start = time.time()
             if self._key in event.data:
+                old = self._state
                 self._state = event.data[self._key]
+                _LOGGER.debug(
+                    "[wp6003] sensor %s update key=%s old=%s new=%s dt=%.4f",
+                    self._attr_unique_id,
+                    self._key,
+                    old,
+                    self._state,
+                    time.time() - start,
+                )
                 self.async_write_ha_state()
 
         self._remove_listener = self.hass.bus.async_listen(f"{DOMAIN}_update", handle_update)
 
     async def async_will_remove_from_hass(self):
+        _LOGGER.debug("[wp6003] sensor %s will be removed", self._attr_unique_id)
         if self._remove_listener:
             self._remove_listener()
             self._remove_listener = None
