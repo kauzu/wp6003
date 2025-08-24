@@ -12,6 +12,7 @@ PLATFORMS: list[str] = ["sensor"]
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the wp6003 namespace."""
     hass.data.setdefault(DOMAIN, {})
+    _LOGGER.debug("wp6003 async_setup called")
     return True
 
 

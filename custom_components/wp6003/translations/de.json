@@ -1,0 +1,14 @@
+{
+	"title": "WP6003 Sensor",
+	"config": {
+		"step": {
+			"user": {
+				"title": "WP6003 einrichten",
+				"description": "Gib die MAC-Adresse deines WP6003 Geräts ein.",
+				"data": {
+					"mac_address": "Geräte-MAC-Adresse"
+				}
+			}
+		}
+	}
+}
