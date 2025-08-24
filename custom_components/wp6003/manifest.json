@@ -1,7 +1,7 @@
 {
   "domain": "wp6003",
   "name": "WP6003 BLE Sensor",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "documentation": "https://github.com/kauzu/wp6003",
   "requirements": [],
   "after_dependencies": ["bluetooth"],
