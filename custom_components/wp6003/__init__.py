@@ -2,6 +2,9 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType
 from .const import DOMAIN
+import logging
+
+_LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[str] = ["sensor"]
 
@@ -16,10 +19,28 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up a config entry: register BLE callback + forward platforms."""
     from . import bluetooth  # local import to avoid circulars
 
-    unregister = await bluetooth.async_setup_entry(hass, entry)
+    try:
+        unregister = await bluetooth.async_setup_entry(hass, entry)
+    except Exception:  # pragma: no cover
+        _LOGGER.exception("Failed to register bluetooth callback")
+        unregister = None
+
     hass.data[DOMAIN][entry.entry_id] = {"unregister_callback": unregister}
 
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    try:
+        # Newer HA (2023.8+) helper for multiple platforms
+        forward = getattr(hass.config_entries, "async_forward_entry_setups", None)
+        if forward:
+            await forward(entry, PLATFORMS)
+        else:
+            # Fallback for older cores
+            for platform in PLATFORMS:
+                hass.async_create_task(
+                    hass.config_entries.async_forward_entry_setup(entry, platform)
+                )
+    except Exception:  # pragma: no cover
+        _LOGGER.exception("Error forwarding platforms for %s", entry.entry_id)
+        return False
     return True
 
 
@@ -32,7 +53,11 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         except Exception:  # pragma: no cover - defensive
             pass
 
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    try:
+        unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    except Exception:  # pragma: no cover
+        _LOGGER.exception("Error unloading platforms for %s", entry.entry_id)
+        unload_ok = False
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id, None)
     return unload_ok
