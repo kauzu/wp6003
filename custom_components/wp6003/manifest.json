@@ -1,14 +1,11 @@
 {
   "domain": "wp6003",
   "name": "WP6003 BLE Sensor",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "documentation": "https://github.com/kauzu/wp6003",
   "requirements": [],
   "after_dependencies": ["bluetooth"],
   "codeowners": ["@kauzu"],
   "config_flow": true,
-  "iot_class": "local_push",
-  "bluetooth": {
-    "manufacturer_id": 60161
-  }
+  "iot_class": "local_push"
 }

@@ -10,13 +10,13 @@ import logging
 import time
 
 _LOGGER = logging.getLogger(__name__)
-_LOGGER.debug("[wp6003] bluetooth module imported")
+_LOGGER.warning("[wp6003] bluetooth module imported (passive mode; manifest bluetooth key removed for isolation)")
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities=None):
     """Register a bluetooth callback for the target MAC and return unregister callable."""
     target_mac = config_entry.data.get(CONF_MAC, "").lower()
-    _LOGGER.debug("[wp6003] bluetooth.async_setup_entry target_mac=%s entry=%s", target_mac, config_entry.entry_id)
+    _LOGGER.warning("[wp6003] bluetooth.async_setup_entry target_mac=%s entry=%s (callback temporarily disabled)", target_mac, config_entry.entry_id)
 
     def ble_callback(service_info: BluetoothServiceInfoBleak, change: BluetoothChange):
         start = time.time()
@@ -38,7 +38,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities=None):
         finally:
             _LOGGER.debug("[wp6003] ble_callback dt=%.4f", time.time() - start)
 
-    matcher: BluetoothCallbackMatcher = {"manufacturer_id": 0xEB01}
-    _LOGGER.debug("Registering WP6003 BLE callback for %s matcher=%s", target_mac, matcher)
-    unregister = async_register_callback(hass, ble_callback, matcher, bluetooth_adapter=None)
-    return unregister
+    # Temporarily skip registering callback to isolate startup failure
+    _LOGGER.warning("[wp6003] Skipping BLE callback registration for isolation test")
+    def dummy_unregister():
+        _LOGGER.warning("[wp6003] dummy_unregister called")
+    return dummy_unregister
